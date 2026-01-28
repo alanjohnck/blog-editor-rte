@@ -1,11 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
 import { RTE } from 'editor-structure/rte-package/src/editor.js'
+import { AVAILABLE_TOOLBAR_GROUPS } from 'editor-structure/rte-package/src/config/defaults.js'
 import '@fortawesome/fontawesome-free/css/all.css'
 import 'editor-structure/rte-package/src/styles/main.css'
 import 'editor-structure/rte-package/src/styles/components.css'
 import 'editor-structure/rte-package/src/components/modal.css'
 import './App.css'
 import './BlogEditor.css'
+import config from './editorConfig.json'
+
+// Build toolbar from JSON config
+const customToolbar = config.toolbar.groups.map(groupName => AVAILABLE_TOOLBAR_GROUPS[groupName])
+
+// Build editor configuration from JSON
+const editorConfig = {
+  ...(customToolbar.length > 0 && { toolbar: customToolbar }),
+  placeholder: config.editor.placeholder,
+  minHeight: config.editor.minHeight,
+  spellCheck: config.editor.spellCheck,
+  autoFocus: config.editor.autoFocus,
+  autosave: config.autosave,
+  versionHistory: config.versionHistory,
+  pasteCleanup: config.pasteCleanup
+}
+
 
 const STORAGE_KEYS = {
   BLOGS: 'editor_blogs',
@@ -14,15 +32,12 @@ const STORAGE_KEYS = {
 
 const AUTO_SAVE_INTERVAL = 3000 // 3 seconds
 
-const toolbarConfig = [
-  
-]
 
 export default function App() {
   const editorRef = useRef(null)
   const rteInstance = useRef(null)
   const autoSaveTimerRef = useRef(null)
-  
+
   const [blogs, setBlogs] = useState([])
   const [currentBlogId, setCurrentBlogId] = useState(null)
   const [title, setTitle] = useState('Untitled Document')
@@ -38,11 +53,11 @@ export default function App() {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.BLOGS)
       const blogId = localStorage.getItem(STORAGE_KEYS.CURRENT_BLOG_ID)
-      
+
       if (saved) {
         const blogsList = JSON.parse(saved)
         setBlogs(blogsList)
-        
+
         // Set current blog
         if (blogId && blogsList.find(b => b.id === blogId)) {
           setCurrentBlogId(blogId)
@@ -52,7 +67,7 @@ export default function App() {
           return blogsList[0]
         }
       }
-      
+
       return null
     } catch (error) {
       console.error('Failed to load blogs:', error)
@@ -72,7 +87,7 @@ export default function App() {
   // Create new blog
   const createNewBlog = () => {
     if (!newBlogTitle.trim()) return
-    
+
     const newBlog = {
       id: Date.now().toString(),
       title: newBlogTitle,
@@ -135,7 +150,7 @@ export default function App() {
       const updatedBlogs = blogs.filter(b => b.id !== blogId)
       setBlogs(updatedBlogs)
       saveBlogs(updatedBlogs)
-      
+
       if (currentBlogId === blogId) {
         const nextBlog = updatedBlogs[0]
         switchBlog(nextBlog.id)
@@ -155,7 +170,7 @@ export default function App() {
   // Save current blog
   const saveCurrentBlog = (content, blogTitle) => {
     if (!currentBlogId) return
-    
+
     try {
       const updatedBlogs = blogs.map(b => {
         if (b.id === currentBlogId) {
@@ -169,7 +184,7 @@ export default function App() {
         }
         return b
       })
-      
+
       setBlogs(updatedBlogs)
       saveBlogs(updatedBlogs)
       setLastSaved(new Date().toLocaleTimeString())
@@ -182,11 +197,9 @@ export default function App() {
   // Initialize editor
   useEffect(() => {
     const currentBlog = loadBlogs()
-    
+
     if (editorRef.current && !rteInstance.current) {
-      rteInstance.current = new RTE(editorRef.current, {
-        toolbar: toolbarConfig,
-      })
+      rteInstance.current = new RTE(editorRef.current, editorConfig)
 
       if (currentBlog) {
         setTitle(currentBlog.title)
@@ -212,7 +225,7 @@ export default function App() {
       // Setup auto-save
       const handleContentChange = () => {
         setIsSaved(false)
-        
+
         if (autoSaveTimerRef.current) {
           clearTimeout(autoSaveTimerRef.current)
         }
@@ -220,7 +233,7 @@ export default function App() {
         autoSaveTimerRef.current = setTimeout(() => {
           const content = rteInstance.current.getContent()
           const currentId = currentBlogId || blogs[0]?.id
-          
+
           if (currentId) {
             const updatedBlogs = blogs.map(b => {
               if (b.id === currentId) {
@@ -313,7 +326,7 @@ export default function App() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2><i className="fas fa-file-alt"></i> My Blogs</h2>
-          <button 
+          <button
             className="btn-new-blog"
             onClick={() => setShowNewBlogForm(!showNewBlogForm)}
             title="Create new blog"

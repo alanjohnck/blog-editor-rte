@@ -1,0 +1,36 @@
+{
+  "toolbar": {
+    "groups": [
+      "clipboard",
+      "formatting",
+      "paragraph",
+      "insert"
+    ]
+  },
+  "editor": {
+    "placeholder": "Start writing your blog post...",
+    "minHeight": "400px",
+    "spellCheck": true,
+    "autoFocus": false
+  },
+  "autosave": {
+    "enabled": true,
+    "delay": 3000
+  },
+  "versionHistory": {
+    "enabled": true,
+    "maxVersions": 20
+  },
+  "pasteCleanup": {
+    "formatOption": "cleanFormat",
+    "deniedTags": [],
+    "deniedAttributes": ["style", "class"],
+    "allowedStyleProperties": [
+      "color",
+      "background-color",
+      "font-weight",
+      "font-style",
+      "text-decoration"
+    ]
+  }
+}
